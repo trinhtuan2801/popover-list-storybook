@@ -4,18 +4,15 @@ import { AddShoppingCart } from '@mui/icons-material';
 import {
   Box,
   BoxProps,
-  Button,
   Fade,
-  FormControl,
   FormControlLabel,
-  FormLabel,
   Radio,
   RadioGroup,
   Typography,
 } from '@mui/material';
+import { useState } from 'react';
 import BlackButton from './BlackButton';
 import PopoverList, { PopoverListProps } from './PopoverList';
-import { useState } from 'react';
 
 const items = [
   {
@@ -63,8 +60,8 @@ export const Default: Story = {
     ),
   },
   render: ({ ...args }) => {
-    const [align, setAlign] = useState<BoxProps['alignItems']>('flex-start');
-
+    const [align, setAlign] = useState('flex-start');
+    const [justify, setJustify] = useState('flex-start');
     return (
       <>
         <Typography>Button position</Typography>
@@ -73,7 +70,19 @@ export const Default: Story = {
           <FormControlLabel value='center' control={<Radio />} label='center' />
           <FormControlLabel value='flex-end' control={<Radio />} label='bottom' />
         </RadioGroup>
-        <Box border='1px solid grey' borderRadius={2} p={2} height='500px' display='flex' justifyContent='flex-end' alignItems={align}>
+        <RadioGroup row value={justify} onChange={(e) => setJustify(e.target.value)}>
+          <FormControlLabel value='flex-start' control={<Radio />} label='left' />
+          <FormControlLabel value='flex-end' control={<Radio />} label='right' />
+        </RadioGroup>
+        <Box
+          border='1px solid grey'
+          borderRadius={2}
+          p={2}
+          height='500px'
+          display='flex'
+          justifyContent={justify}
+          alignItems={align}
+        >
           <PopoverList {...args} />
         </Box>
       </>

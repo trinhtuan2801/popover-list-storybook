@@ -12,57 +12,69 @@ export interface PopoverListProps {
   }) => ReactElement;
 }
 
+const GapHeight = 8;
+const OpenCloseDelay = 100;
+
 export default function PopoverList({ items, children }: PopoverListProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const anchorEl = useRef<HTMLElement>(null);
+  const [isOpenList, setIsOpenList] = useState(false);
+  const anchorEl = useRef<HTMLElement>();
   const closeButtonRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const [gapHeight, setGapHeight] = useState(0);
-  const [offsetX, setOffsetX] = useState(0);
-  const [listDims, setListDims] = useState({
-    w: 0,
-    h: 0,
-  });
+  const [listDims, setListDims] = useState({ h: 0, w: 0 });
+
+  const openCloseDelayTimer = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
-    if (isOpen && anchorEl.current && closeButtonRef.current) {
-      setOffsetX(-anchorEl.current.clientWidth + closeButtonRef.current.clientWidth);
-    }
-    if (isOpen && listRef.current) {
-      setListDims({
-        w: listRef.current.clientWidth,
-        h: listRef.current.clientHeight + (items.length - 1) * 8 + 32,
-      });
-    }
+    setListDims({
+      w: listRef.current!.clientWidth,
+      h: listRef.current!.clientHeight + (items.length - 1) * GapHeight + 32,
+    });
+
+    return () => clearTimeout(openCloseDelayTimer.current);
+  }, []);
+
+  useEffect(() => {
+    setIsOpenList(isOpen);
   }, [isOpen]);
 
   const open = () => {
     setIsOpen(true);
-    setTimeout(() => {
-      setGapHeight(8);
-    }, 100);
+    openCloseDelayTimer.current = setTimeout(() => {
+      setGapHeight(GapHeight);
+    }, OpenCloseDelay);
   };
 
   const close = () => {
     setGapHeight(0);
-    setTimeout(() => {
+    openCloseDelayTimer.current = setTimeout(() => {
       setIsOpen(false);
-    }, 100);
+    }, OpenCloseDelay);
   };
 
   return (
     <>
       {children({ isOpen, open, anchorEl })}
-      <Backdrop open={isOpen} style={{ zIndex: 1300 }}>
+      <Box visibility='hidden' position='fixed' top={0} left={0} sx={{ pointerEvents: 'none' }}>
+        <Box display='flex' flexDirection='column' px={2} ref={listRef}>
+          {items.map((item, index) => (
+            <Fragment key={index}>
+              <Item key={index} {...item} />
+            </Fragment>
+          ))}
+        </Box>
+      </Box>
+      <Backdrop open={isOpen}>
         <Popover
           open={isOpen}
           anchorEl={anchorEl.current}
           anchorOrigin={{
-            vertical: 'bottom',
+            vertical: 'center',
             horizontal: 'right',
           }}
           transformOrigin={{
-            vertical: 'bottom',
+            vertical: 'center',
             horizontal: 'right',
           }}
           slotProps={{
@@ -75,22 +87,13 @@ export default function PopoverList({ items, children }: PopoverListProps) {
           }}
           elevation={0}
           TransitionComponent={Transition}
-          disablePortal
-          transitionDuration={400}
         >
-          <CloseButton ref={closeButtonRef} onClick={close} />
+          <CloseButton onClick={close} ref={closeButtonRef} />
+
           <Popper
-            open={true}
-            anchorEl={anchorEl.current}
+            open={isOpenList}
+            anchorEl={closeButtonRef.current}
             placement='left'
-            modifiers={[
-              {
-                name: 'offset',
-                options: {
-                  offset: [0, offsetX],
-                },
-              },
-            ]}
             transition
             disablePortal
           >
@@ -103,9 +106,8 @@ export default function PopoverList({ items, children }: PopoverListProps) {
                     left={0}
                     display='flex'
                     flexDirection='column'
-                    pr={2}
+                    px={2}
                     justifyContent='flex-end'
-                    ref={listRef}
                   >
                     {items.map((item, index) => (
                       <Fragment key={index}>
