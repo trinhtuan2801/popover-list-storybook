@@ -87,6 +87,7 @@ export default function PopoverList({ items, children }: PopoverListProps) {
           }}
           elevation={0}
           TransitionComponent={Transition}
+          disablePortal
         >
           <CloseButton onClick={close} ref={closeButtonRef} />
 
